@@ -105,6 +105,9 @@
 
 <body>
     <div style="margin:3rem auto;width:45rem">
+        <div style="text-align: right;">
+            <button id='help_button'>도움말</button>
+        </div>
         <h1>짧은 일기</h1>
         <div class="top-button-group">
             <button id="add_button">추가</button>
@@ -112,6 +115,12 @@
         <div id="posts_container"></div>
     </div>
     <script>
+
+        window.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && e.key == 'Enter') {
+                addPost();
+            }
+        });
 
         // THIS IS WHAT YOU NEED
         const countWithRegex = (str, regexStr) => {
@@ -341,7 +350,7 @@
             return article;
         }
 
-        add_button.addEventListener('click', function () {
+        function addPost() {
             const article = renderNewPostInput();
             if (posts_container.firstElementChild) {
                 posts_container.insertBefore(article, posts_container.firstElementChild);
@@ -349,7 +358,15 @@
                 posts_container.appendChild(article);
             }
             article.querySelector('textarea').focus();
-        });
+        }
+
+        add_button.addEventListener('click', addPost);
+
+        const help_button = document.getElementById('help_button');
+
+        help_button.addEventListener('click', function(){
+            alert('[도움말]\n\n모든 내용은 개인 컴퓨터에만 저장됩니다.\n\n\n단축키\n\n글쓰기 : Ctrl + Enter\n글저장 : Ctrl + s\n취소 : esc\n')
+        })
 
         loadPosts();
     </script>
