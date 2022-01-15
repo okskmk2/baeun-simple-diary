@@ -217,12 +217,15 @@
         }
 
         function deletePost() {
-            const article = this.parentElement.parentElement.parentElement;
-            const postId = parseInt(article.dataset.postId);
-            let posts = JSON.parse(localStorage.getItem('posts'));
-            posts = posts.filter(v => v.id !== postId);
-            localStorage.setItem('posts', JSON.stringify(posts));
-            loadPosts();
+            let answer = confirm("글을 삭제하시겠습니까?");
+            if (answer) {
+                const article = this.parentElement.parentElement.parentElement;
+                const postId = parseInt(article.dataset.postId);
+                let posts = JSON.parse(localStorage.getItem('posts'));
+                posts = posts.filter(v => v.id !== postId);
+                localStorage.setItem('posts', JSON.stringify(posts));
+                loadPosts();
+            }
         }
 
         function renderPost(post) {
@@ -364,7 +367,7 @@
 
         const help_button = document.getElementById('help_button');
 
-        help_button.addEventListener('click', function(){
+        help_button.addEventListener('click', function () {
             alert('[도움말]\n\n모든 내용은 개인 컴퓨터에만 저장됩니다.\n\n\n단축키\n\n글쓰기 : Ctrl + Enter\n글저장 : Ctrl + s\n취소 : esc\n')
         })
 
