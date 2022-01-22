@@ -1,1 +1,270 @@
-let isEditMode=!1;window.addEventListener("keydown",function(e){e.ctrlKey&&"Enter"==e.key&&addPost()});const countWithRegex=(e,t)=>((e||"").match(new RegExp(t,"g"))||[]).length;function textareaShortCutKey(e,t,n){e.addEventListener("keydown",function(s){"Escape"==s.key?(s.preventDefault(),n()):s.ctrlKey&&"s"===s.key&&(s.preventDefault(),t()),e.offsetHeight<e.scrollHeight&&(e.style.height=e.scrollHeight+16+"px")})}function now(){return(new Date).toLocaleString()}function generatePostNum(){localStorage.getItem("post_seq")||localStorage.setItem("post_seq",0);let e=parseInt(localStorage.getItem("post_seq"));return++e}const posts_container=document.getElementById("posts_container");function updatePost(){const e=parseInt(this.dataset.postId),t=this.querySelector(".title_div textarea"),n=JSON.parse(localStorage.getItem("posts"));let s=-1,o=null;for(let t=0;t<n.length;t++){const a=n[t];if(a.id===e){s=t,o=a;break}}n[s]=Object.assign(o,{title:t.value,updateAt:now()}),localStorage.setItem("posts",JSON.stringify(n)),loadPosts()}function renderUpdatePostInput(){if(console.log("renderUpdatePostInput"),isEditMode)return void console.log(message.already);isEditMode=!0;this.querySelector(".update_button").classList.add("hide"),this.querySelector(".delete_button").classList.add("hide"),this.querySelector(".cancel_button").classList.remove("hide"),this.querySelector(".update_button2").classList.remove("hide");const e=this.querySelector(".title_div"),t=e.innerHTML,n=document.createElement("textarea");textareaShortCutKey(n,updatePost.bind(this),loadPosts),n.value=t;let s=countWithRegex(t,"\n");n.style.height=24*s+16+"px",e.innerHTML=null,e.appendChild(n),n.focus()}function deletePost(){if(confirm(message.deleteConfirm)){const e=this.parentElement.parentElement.parentElement,t=parseInt(e.dataset.postId);let n=JSON.parse(localStorage.getItem("posts"));n=n.filter(e=>e.id!==t),localStorage.setItem("posts",JSON.stringify(n)),loadPosts()}}function renderPost(e){const t=document.createElement("article");t.classList.add("post-item"),t.dataset.postId=e.id;const n=document.createElement("div");n.classList.add("title_div"),n.innerHTML=e.title;const s=document.createElement("div");s.className="post-button-group";const o=document.createElement("button");o.classList.add("update_button"),o.addEventListener("click",renderUpdatePostInput.bind(t)),o.innerHTML=message.update,s.appendChild(o);const a=document.createElement("button");a.classList.add("delete_button"),a.addEventListener("click",deletePost),a.innerHTML=message.delete,s.appendChild(a);const d=document.createElement("button");d.classList.add("cancel_button"),d.classList.add("hide"),d.addEventListener("click",loadPosts),d.innerHTML=message.cancel,s.appendChild(d);const l=document.createElement("button");l.classList.add("update_button2"),l.classList.add("hide"),l.addEventListener("click",updatePost.bind(t)),l.innerHTML=message.save,s.appendChild(l);const c=document.createElement("div");c.classList.add("post-inner");const i=document.createElement("div"),r=document.createElement("div");return r.classList.add("create-at"),r.innerHTML=e.createAt,i.classList.add("meta-data"),i.appendChild(r),c.appendChild(i),c.appendChild(n),c.appendChild(s),t.appendChild(c),t}function loadPosts(){console.log("loadPosts"),posts_container.innerHTML=null,localStorage.getItem("posts")||localStorage.setItem("posts","[]");const e=JSON.parse(localStorage.getItem("posts"));for(const t of e){const e=renderPost(t);posts_container.appendChild(e)}isEditMode=!1}const add_button=document.getElementById("add_button");function savePost(){console.log("savePost");const e=this.querySelector("textarea").value,t=generatePostNum();localStorage.getItem("posts")||localStorage.setItem("posts","[]");const n=JSON.parse(localStorage.getItem("posts"));n.unshift({id:t,title:e,createAt:now()}),localStorage.setItem("posts",JSON.stringify(n)),localStorage.setItem("post_seq",t),loadPosts()}function renderNewPostInput(){const e=document.createElement("article");e.classList.add("post-item");const t=document.createElement("div"),n=document.createElement("textarea");textareaShortCutKey(n,savePost.bind(e),loadPosts),t.appendChild(n);const s=document.createElement("div");s.className="post-button-group";const o=document.createElement("button");o.classList.add("cancel_button"),o.addEventListener("click",loadPosts),o.innerHTML=message.cancel,s.appendChild(o);const a=document.createElement("button");a.innerHTML=message.save,a.addEventListener("click",savePost.bind(e)),s.appendChild(a);const d=document.createElement("div");return d.classList.add("post-inner"),d.appendChild(t),d.appendChild(s),e.appendChild(d),e}function addPost(){if(isEditMode)return void console.log(message.already);isEditMode=!0;const e=renderNewPostInput();posts_container.firstElementChild?posts_container.insertBefore(e,posts_container.firstElementChild):posts_container.appendChild(e),e.querySelector("textarea").focus()}add_button.addEventListener("click",addPost);const help_button=document.getElementById("help_button");help_button.addEventListener("click",function(){alert(message.help)}),loadPosts();
+
+let isEditMode = false;
+
+window.addEventListener('keydown', function (e) {
+    if (e.ctrlKey && e.key == 'Enter') {
+        addPost();
+    }
+});
+
+// THIS IS WHAT YOU NEED
+const countWithRegex = (str, regexStr) => {
+    return ((str || '').match(new RegExp(regexStr, 'g')) || []).length
+}
+
+function textareaShortCutKey($textarea, saveFn, cancelFn) {
+    $textarea.addEventListener('keydown', function (e) {
+        if (e.key == "Escape") {
+            e.preventDefault();
+            cancelFn();
+        }
+
+        else if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            saveFn();
+        }
+
+        if ($textarea.offsetHeight < $textarea.scrollHeight) {
+            $textarea.style.height = ($textarea.scrollHeight + 16) + 'px';
+        }
+
+    });
+}
+
+function now() {
+    return new Date().toLocaleString();
+}
+
+function generatePostNum() {
+    if (!localStorage.getItem('post_seq')) {
+        localStorage.setItem('post_seq', 0);
+    }
+    let seq = parseInt(localStorage.getItem('post_seq'));
+    let next_seq = ++seq;
+    return next_seq;
+}
+
+const posts_container = document.getElementById('posts_container');
+
+function updatePost() {
+    const article = this;
+    const postId = parseInt(article.dataset.postId);
+    const title_input = article.querySelector('.title_div textarea');
+
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    let postIndex = -1;
+    let post = null;
+    for (let index = 0; index < posts.length; index++) {
+        const element = posts[index];
+        if (element.id === postId) {
+            postIndex = index;
+            post = element;
+            break;
+        }
+    }
+    posts[postIndex] = Object.assign(post, { title: title_input.value, updateAt: now() });
+
+    localStorage.setItem('posts', JSON.stringify(posts));
+    loadPosts();
+}
+
+
+function renderUpdatePostInput() {
+    console.log("renderUpdatePostInput");
+    if (isEditMode) {
+        console.log(message.already);
+        return;
+    }
+    isEditMode = true;
+    const article = this;
+
+    // 수정 버튼 감추기
+    const update_button = article.querySelector('.update_button');
+    update_button.classList.add('hide');
+
+    // 삭제 버튼 감추기
+    const delete_button = article.querySelector('.delete_button');
+    delete_button.classList.add('hide');
+
+    // 취소 버튼 보이기
+    const cancel_button = article.querySelector('.cancel_button');
+    cancel_button.classList.remove('hide');
+
+    // 수정2 버튼 보이기
+    const update_button2 = article.querySelector('.update_button2');
+    update_button2.classList.remove('hide');
+
+    const title_div = article.querySelector('.title_div');
+    const title = title_div.innerHTML;
+    const title_input = document.createElement('textarea');
+    textareaShortCutKey(title_input, updatePost.bind(article), loadPosts);
+    title_input.value = title;
+    let lineCount = countWithRegex(title, '\n');
+    title_input.style.height = ((lineCount * 24) + 16) + 'px';
+    title_div.innerHTML = null;
+    title_div.appendChild(title_input);
+    title_input.focus();
+}
+
+function deletePost() {
+    let answer = confirm(message.deleteConfirm);
+    if (answer) {
+        const article = this.parentElement.parentElement.parentElement;
+        const postId = parseInt(article.dataset.postId);
+        let posts = JSON.parse(localStorage.getItem('posts'));
+        posts = posts.filter(v => v.id !== postId);
+        localStorage.setItem('posts', JSON.stringify(posts));
+        loadPosts();
+    }
+}
+
+function renderPost(post) {
+    const article = document.createElement('article');
+    article.classList.add('post-item');
+    article.dataset.postId = post.id;
+    // title_div
+    const title_div = document.createElement('div');
+    title_div.classList.add('title_div');
+    title_div.innerHTML = post.title;
+
+
+    // action_div
+    const action_div = document.createElement('div');
+    action_div.className = 'post-button-group';
+
+    // update_button
+    const update_button = document.createElement('button');
+    update_button.classList.add('update_button');
+    update_button.addEventListener('click', renderUpdatePostInput.bind(article));
+    update_button.innerHTML = message.update;
+    action_div.appendChild(update_button);
+
+    // delete_button
+    const delete_button = document.createElement('button');
+    delete_button.classList.add('delete_button');
+    delete_button.addEventListener('click', deletePost);
+    delete_button.innerHTML = message.delete;
+    action_div.appendChild(delete_button);
+
+    // cancel_button
+    const cancel_button = document.createElement('button');
+    cancel_button.classList.add('cancel_button')
+    cancel_button.classList.add('hide');
+    cancel_button.addEventListener('click', loadPosts);
+    cancel_button.innerHTML = message.cancel;
+    action_div.appendChild(cancel_button);
+
+    // real_update_button2
+    const update_button2 = document.createElement('button');
+    update_button2.classList.add('update_button2');
+    update_button2.classList.add('hide');
+    update_button2.addEventListener('click', updatePost.bind(article));
+    update_button2.innerHTML = message.save;
+    action_div.appendChild(update_button2);
+
+    const post_inner = document.createElement('div');
+    post_inner.classList.add('post-inner');
+
+    const meta_data_div = document.createElement('div');
+    const createAt_div = document.createElement('div');
+    createAt_div.classList.add('create-at');
+    createAt_div.innerHTML = post.createAt;
+    meta_data_div.classList.add('meta-data');
+    meta_data_div.appendChild(createAt_div);
+    post_inner.appendChild(meta_data_div);
+    post_inner.appendChild(title_div);
+    post_inner.appendChild(action_div);
+    article.appendChild(post_inner);
+    return article;
+}
+
+function loadPosts() {
+    console.log("loadPosts");
+    posts_container.innerHTML = null;
+    if (!localStorage.getItem('posts')) {
+        localStorage.setItem('posts', '[]');
+    }
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    for (const post of posts) {
+        const article = renderPost(post);
+        posts_container.appendChild(article);
+    }
+    isEditMode = false;
+}
+
+const add_button = document.getElementById('add_button');
+
+function savePost() {
+    console.log("savePost");
+    const article = this;
+    const title_input = article.querySelector('textarea');
+    const title = title_input.value;
+    const id = generatePostNum();
+    if (!localStorage.getItem('posts')) {
+        localStorage.setItem('posts', '[]');
+    }
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    posts.unshift({ id, title, createAt: now() });
+    localStorage.setItem('posts', JSON.stringify(posts));
+    localStorage.setItem('post_seq', id);
+    loadPosts();
+}
+
+function renderNewPostInput() {
+    const article = document.createElement('article');
+    article.classList.add('post-item');
+
+    const title_div = document.createElement('div');
+    const title_input = document.createElement('textarea');
+    textareaShortCutKey(title_input, savePost.bind(article), loadPosts);
+    title_div.appendChild(title_input);
+
+    // action_div
+    const action_div = document.createElement('div');
+    action_div.className = 'post-button-group';
+
+    // cancel_button
+    const cancel_button = document.createElement('button');
+    cancel_button.classList.add('cancel_button')
+    cancel_button.addEventListener('click', loadPosts);
+    cancel_button.innerHTML = message.cancel;
+    action_div.appendChild(cancel_button);
+
+    // save_button
+    const save_button = document.createElement('button');
+    save_button.innerHTML = message.save;
+    save_button.addEventListener('click', savePost.bind(article));
+    action_div.appendChild(save_button);
+
+    const post_inner = document.createElement('div');
+    post_inner.classList.add('post-inner');
+    post_inner.appendChild(title_div);
+    post_inner.appendChild(action_div);
+    article.appendChild(post_inner);
+    return article;
+}
+
+function addPost() {
+    if (isEditMode) {
+        console.log(message.already);
+        return;
+    }
+    isEditMode = true;
+    const article = renderNewPostInput();
+    if (posts_container.firstElementChild) {
+        posts_container.insertBefore(article, posts_container.firstElementChild);
+    } else {
+        posts_container.appendChild(article);
+    }
+    article.querySelector('textarea').focus();
+}
+
+add_button.addEventListener('click', addPost);
+
+const help_button = document.getElementById('help_button');
+
+help_button.addEventListener('click', function () {
+    alert(message.help);
+})
+
+loadPosts();
